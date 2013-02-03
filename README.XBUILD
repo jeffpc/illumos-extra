@@ -1,0 +1,68 @@
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+
+#
+# Copyright (c) 2013, Joyent, Inc.  All rights reserved.
+#
+
+Notes on illumos-extra cross-architecture support
+=================================================
+
+To simply build illumos-extra for ARM, in the root, run:
+
+gmake ARCH=arm STRAP=strap
+
+Historically illumos-extra has only supported targeting the same system as the
+build system which has understandably been x86. As work has begun to ramp up on
+ARM, illumos-extra has been modified slightly to support building for other
+targets. 
+
+illumos-extra now requires an explicit architecture argument. This should be
+passed in like:
+
+gmake ARCH=i86pc
+gmake ARCH=arm
+
+The proto area is now named based on the architecture so everything will be sent
+to $(DESTDIR)/proto-$(ARCH).
+
+The directories that everything is extracted into now have the architecture
+included. This allows us to build multiple architectures at once inside of a
+given workspace. This applies to both the strap and non-strap builds.
+
+For a given directory, its specific cflags, autoconf options, etc. are now
+broken down into two different sets. Those which are architecture specific and
+those which are generic. The names of generic things like CPPFLAGS or
+AUTOCONF_OPTS have not changed. Each of these values may be prefixed with the
+architecture which you would like it applied to. For example:
+
+arm_AUTOCONF_OPTS = --target=arm-*-illumos
+
+If a --target value is not specified it is assumed to be the host system which
+would be an error in most cases. At this time, each subdirectory is required to
+specify target like options. At some point this should be folded into
+Makefile.defs to simplify the addition of new software.
+
+If there is a native component to the build, there are new portions in
+Makefile.defs to facilitate this. Specifically these include the following
+variables:
+
+GCC.host
+GXX.host
+GCC.host.64
+GXX.host.64
+
+This is still a work in progress and things will change as we go. The following
+is a list of outstanding issues that we have:
+
+o We only support building the strap packages
+o There is no good way to clean all of the archs at once
+o Every directory needs to specify various target-like options. 
