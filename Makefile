@@ -23,13 +23,18 @@
 
 BASE =		$(PWD)
 DESTDIR =	$(BASE)/proto-$(ARCH)
-PATH =		$(DESTDIR)/usr/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
+PATH =		$(DESTDIR)/usr/bin:/opt/gcc/4.4.4/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
 
 SUBDIRS = \
 	cpp
 
 STRAP_SUBDIRS = \
 	cpp
+
+GCC_SUBDIRS = \
+	gmp \
+	mpfr \
+	mpc
 
 NAME =	illumos-extra
 
@@ -56,6 +61,9 @@ all: $(SUBDIRS)
 
 strap: $(STRAP_SUBDIRS)
 
+mpfr: gmp 
+mpc: mpfr gmp
+
 #
 # pkg-config may be installed. This will actually only hurt us rather than help
 # us. pkg-config is based as a part of the pkgsrc packages and will pull in
@@ -72,11 +80,26 @@ $(DESTDIR)/usr/gnu/bin/gas: FRC
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
 
 
-$(DESTDIR)/usr/bin/gcc: $(DESTDIR)/usr/gnu/bin/gas
+$(DESTDIR)/usr/bin/gcc: $(DESTDIR)/usr/gnu/bin/gas $(GCC_SUBDIRS)
 	(cd gcc4 && \
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
+
+#
+# XXX
+# The libtool library archives pathologically encode the full name of the
+# library in the *.la file. Therefore when dependents comes around say mpc on
+# mpfr, they look around for the library in question and basically lose DESTDIR
+# off the prefix. We could perhap set prefix and override how the install target
+# works here, but that seems bad. All in all, libtool hell is a great place to
+# be.
+#
+$(GCC_SUBDIRS): FRC
+	(cd $@ && \
+	    PKG_CONFIG_LIBDIR="" \
+	    STRAP=$(STRAP) \
+	    $(MAKE) DESTDIR=$(DESTDIR) install && rm -f $(DESTDIR)/usr/lib/*.la)
 
 $(SUBDIRS): $(DESTDIR)/usr/bin/gcc
 	(cd $@ && \
@@ -86,7 +109,7 @@ $(SUBDIRS): $(DESTDIR)/usr/bin/gcc
 
 install: $(SUBDIRS) gcc4 binutils
 
-install_strap: $(STRAP_SUBDIRS) gcc4 binutils
+install_strap: $(STRAP_SUBDIRS) gcc4 binutils $(GCC_SUBDIRS)
 
 clean: 
 	-for dir in $(SUBDIRS) gcc4 binutils; \
