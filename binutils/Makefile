@@ -32,7 +32,7 @@ AUTOCONF_OPTS += \
 	--program-prefix=g
 
 arm_AUTOCONF_OPTS += \
-	--target=arm-*-illumos \
+	--target=arm-*-solaris2.11 \
 	--enable-ld=no
 
 arm_PATCHES +=	arm.patch

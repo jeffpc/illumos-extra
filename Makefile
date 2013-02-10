@@ -52,6 +52,12 @@ ifeq ($(ARCH),)
 $(error ARCH is not defined. ARCH should be one of i86pc or arm)
 endif
 
+ifeq ($(ARCH),arm)
+ifeq ($(LD_ALTEXEC),)
+$(error LD_ALTEXEC should point to an arm ld)
+endif
+endif
+
 GITDESCRIBE = \
 	g$(shell git describe --all --long | $(AWK) -F'-g' '{print $$NF}')
 

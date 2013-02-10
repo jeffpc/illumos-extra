@@ -1,0 +1,112 @@
+From 869c0de87c923589b6ffb77dbe25fb1e5854c656 Mon Sep 17 00:00:00 2001
+From: Robert Mustacchi <rm@joyent.com>
+Date: Sat, 9 Feb 2013 15:50:33 -0800
+Subject: [PATCH] Make arm-*-solaris2.11 arm-none-eabi
+
+This patch was authored by Rich Lowe so that we might have a basic arm
+compiler, even though it currently is missing Solarisy features. Given
+that we're not to the point of hello world over serial -- that's just
+fine.
+---
+ gcc/config.gcc         |    7 ++++++-
+ gcc/config/arm/bpabi.h |    2 +-
+ gcc/config/arm/elf.h   |    2 +-
+ libcpp/configure       |    1 +
+ libcpp/configure.ac    |    1 +
+ libgcc/config.host     |    5 +++++
+ 6 files changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index ab98438..7aa88db 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -870,7 +870,7 @@ arm*-*-ecos-elf)
+ 	tmake_file="arm/t-arm arm/t-arm-elf"
+ 	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
+ 	;;
+-arm*-*-eabi* | arm*-*-symbianelf* )
++arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-solaris*)
+ 	# The BPABI long long divmod functions return a 128-bit value in
+ 	# registers r0-r3.  Correctly modeling that requires the use of
+ 	# TImode.
+@@ -880,6 +880,11 @@ arm*-*-eabi* | arm*-*-symbianelf* )
+ 	tm_file="$tm_file ../../libgcc/config/arm/bpabi-lib.h"
+ 	tmake_file="arm/t-arm arm/t-arm-elf"
+ 	case ${target} in
++	arm*-*-solaris*) # XXX: Directly arm-none-eabi, at present. it will get... more-er
++	  tm_file="$tm_file newlib-stdint.h"
++	  tmake_file="${tmake_file} arm/t-bpabi"
++	  use_gcc_stdint=wrap
++	  ;;
+ 	arm*-*-eabi*)
+ 	  tm_file="$tm_file newlib-stdint.h"
+ 	  tmake_file="${tmake_file} arm/t-bpabi"
+diff --git a/gcc/config/arm/bpabi.h b/gcc/config/arm/bpabi.h
+index 7b5ee62..a703548 100644
+--- a/gcc/config/arm/bpabi.h
++++ b/gcc/config/arm/bpabi.h
+@@ -71,7 +71,7 @@
+ #define BPABI_LINK_SPEC \
+   "%{mbig-endian:-EB} %{mlittle-endian:-EL} "		\
+   "%{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic} "	\
+-  "-X" SUBTARGET_EXTRA_LINK_SPEC TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
++  SUBTARGET_EXTRA_LINK_SPEC TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
+ 
+ #undef  LINK_SPEC
+ #define LINK_SPEC BPABI_LINK_SPEC
+diff --git a/gcc/config/arm/elf.h b/gcc/config/arm/elf.h
+index 8840088..bccd25f 100644
+--- a/gcc/config/arm/elf.h
++++ b/gcc/config/arm/elf.h
+@@ -105,7 +105,7 @@
+    (TARGET_32BIT || (TARGET_THUMB && (optimize_size || flag_pic)))
+ 
+ #ifndef LINK_SPEC
+-#define LINK_SPEC "%{mbig-endian:-EB} %{mlittle-endian:-EL} -X"
++#define LINK_SPEC "%{mbig-endian:-EB} %{mlittle-endian:-EL}"
+ #endif
+   
+ /* Run-time Target Specification.  */
+diff --git a/libcpp/configure b/libcpp/configure
+index 41677ce..adc730f 100755
+--- a/libcpp/configure
++++ b/libcpp/configure
+@@ -7091,6 +7091,7 @@ case $target in
+ 	alpha*-*-* | \
+ 	arm*-*-*eabi* | \
+ 	arm*-*-symbianelf* | \
++	arm*-*-solaris* | \
+ 	x86_64-*-* | \
+ 	ia64-*-* | \
+ 	hppa*64*-*-* | \
+diff --git a/libcpp/configure.ac b/libcpp/configure.ac
+index 1c67eaf..58ef2f5 100644
+--- a/libcpp/configure.ac
++++ b/libcpp/configure.ac
+@@ -141,6 +141,7 @@ case $target in
+ 	alpha*-*-* | \
+ 	arm*-*-*eabi* | \
+ 	arm*-*-symbianelf* | \
++	arm*-*-solaris* | \
+ 	x86_64-*-* | \
+ 	ia64-*-* | \
+ 	hppa*64*-*-* | \
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 25e949e..18c3c45 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -311,6 +311,11 @@ i[34567]86-*-nto-qnx*)
+ 	;;
+ i[34567]86-*-rtems*)
+ 	;;
++arm*-*-solaris2*)
++	# XXX: needs t-sol2 to work?
++	# XXX: We want to provied the same runtime objs as we do for i386, also?
++	# extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
++	;;
+ i[34567]86-*-solaris2*)
+ 	tmake_file="${tmake_file} i386/t-sol2"
+ 	case ${host} in
+-- 
+1.7.3.2
+

@@ -1,0 +1,18 @@
+git://github.com/richlowe/gcc
+branch il-wip-4_6_3
+
+HEAD:
+commit cbee33f3f3b71d3eba21508e693c44ace09900cc
+Author: Richard Lowe <richlowe@richlowe.net>
+Date:   Sat Oct 27 02:44:09 2012 +0100
+
+    Implement -fstrict-calling-conventions
+    
+    Stock GCC is overly willing to violate the ABI when calling local functions,
+    such that it passes arguments in registers on i386.  This hampers debugging
+    with anything other than a fully-aware DWARF debugger, and is generally not
+    something we desire.
+    
+    Implement a flag which disables this behaviour, enabled by default.  The flag is
+    global, though only effective on i386, to more easily allow its globalization
+    later which, given the odds, is likely to be necessary.
