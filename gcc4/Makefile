@@ -69,7 +69,7 @@ all: $(VER)-$(ARCH)-build/config.status
 	    STAGE1_CFLAGS="-g -O2" \
 	    CFLAGS_FOR_TARGET="-g -O2" \
 	    MAKE=gmake gmake \
-	    LD_LIBRARY_PATH="$(DESTDIR)/usr/lib:/opt/gcc/4.4.4/lib:/usr/lib:/lib:/usr/sfw/lib" \
+	    LD_LIBRARY_PATH="$(DESTDIR)/usr/lib:/opt/gcc/4.4.4/lib:/lib:/usr/lib:/usr/sfw/lib" \
 	    LD_ALTEXEC=$(LD_ALTEXEC) \
 		CFLAGS="-g -O2" \
 		STAGE1_CFLAGS="-g -O2" \
@@ -87,7 +87,7 @@ install: all
 	    CFLAGS_FOR_TARGET="-g -O2" \
 	    DESTDIR=$(DESTDIR) \
 	    PATH=$(PATH) \
-	    LD_LIBRARY_PATH="$(DESTDIR)/usr/lib:/opt/gcc/4.4.4/lib:/usr/lib:/lib:/usr/sfw/lib" \
+	    LD_LIBRARY_PATH="$(DESTDIR)/usr/lib:/opt/gcc/4.4.4/lib:/lib:/usr/lib:/lib:/usr/sfw/lib" \
 	    LD_ALTEXEC=$(LD_ALTEXEC) \
 	    MAKE=gmake gmake \
 		CFLAGS="-g -O2" \
@@ -111,7 +111,7 @@ $(VER)-$(ARCH)-build/config.status: $(VER)-$(ARCH)-build $(VER.32)/configure $(V
 	    DESTDIR=$(DESTDIR) \
 	    PATH=$(PATH) \
 	    MAKE=gmake \
-	    LD_ALTEXEC=/ws/rm/arm-dis/proto/root_i386/usr/bin/ld \
+	    LD_ALTEXEC=$(LD_ALTEXEC) \
 	../$(VER.32)/configure \
 		--prefix=/usr \
 		--with-ld=/usr/bin/ld \
