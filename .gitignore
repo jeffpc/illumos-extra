@@ -5,3 +5,7 @@
 /gmp/gmp-5.1.0-arm-32strap/
 /mpc/mpc-1.0.1-arm-32strap/
 /mpfr/mpfr-3.1.1-arm-32strap/
+cpp/cpp.ostrap
+cpp/cppstrap
+cpp/y.tab.c
+cpp/y.tab.ostrap

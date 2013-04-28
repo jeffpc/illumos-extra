@@ -58,6 +58,10 @@ $(error LD_ALTEXEC should point to an arm ld)
 endif
 endif
 
+ifneq ($(STRAP),strap)
+$(error only building the strap is supported currently)
+endif
+
 GITDESCRIBE = \
 	g$(shell git describe --all --long | $(AWK) -F'-g' '{print $$NF}')
 
@@ -118,15 +122,12 @@ install: $(SUBDIRS) gcc4 binutils
 install_strap: $(STRAP_SUBDIRS) gcc4 binutils $(GCC_SUBDIRS)
 
 clean: 
-	-for dir in $(SUBDIRS) gcc4 binutils; \
+	-for dir in $(SUBDIRS) gcc4 binutils $(GCC_SUBDIRS); \
 	    do (cd $$dir; $(MAKE) DESTDIR=$(DESTDIR) clean); done
 	-rm -rf proto
 
 manifest:
 	cp manifest $(DESTDIR)/$(DESTNAME)
-
-tarball:
-	tar -zcf $(TARBALL) manifest proto
 
 FRC:
 
