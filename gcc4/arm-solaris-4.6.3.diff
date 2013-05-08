@@ -1,0 +1,229 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index ab98438..0797e90 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -870,7 +870,7 @@ arm*-*-ecos-elf)
+   tmake_file="arm/t-arm arm/t-arm-elf"
+ 	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
+ 	;;
+-arm*-*-eabi* | arm*-*-symbianelf* )
++arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-solaris*)
+ 	# The BPABI long long divmod functions return a 128-bit value in
+ 	# registers r0-r3.  Correctly modeling that requires the use of
+ 	# TImode.
+@@ -880,6 +880,16 @@ arm*-*-eabi* | arm*-*-symbianelf* )
+ 	tm_file="$tm_file ../../libgcc/config/arm/bpabi-lib.h"
+ 	tmake_file="arm/t-arm arm/t-arm-elf"
+ 	case ${target} in
++	arm*-*-solaris*)
++	  tm_file="$tm_file sol2.h sol2-10.h arm/sol2.h"
++	  tmake_file="${tmake_file} arm/t-bpabi t-sol2 t-svr4 arm/t-sol2"
++	  use_gcc_stdint=wrap
++	  c_target_objs="${c_target_objs} sol2-c.o"
++	  cxx_target_objs="${cxx_target_objs} sol2-c.o"
++	  extra_objs="${extra_objs} sol2.o"
++	  tm_p_file="${tm_p_file} sol2-protos.h"
++	  tm_file="${tm_file} tm-dwarf2.h"
++	  ;;
+ 	arm*-*-eabi*)
+ 	  tm_file="$tm_file newlib-stdint.h"
+ 	  tmake_file="${tmake_file} arm/t-bpabi"
+diff --git a/gcc/config/arm/arm.c b/gcc/config/arm/arm.c
+index 49c2a75..b1cd9d8 100644
+--- a/gcc/config/arm/arm.c
++++ b/gcc/config/arm/arm.c
+@@ -85,7 +85,7 @@ static int const_ok_for_op (HOST_WIDE_INT, enum rtx_code);
+ static rtx emit_sfm (int, int);
+ static unsigned arm_size_return_regs (void);
+ static bool arm_assemble_integer (rtx, unsigned int, int);
+-static void arm_print_operand (FILE *, rtx, int);
++void arm_print_operand (FILE *, rtx, int);
+ static void arm_print_operand_address (FILE *, rtx);
+ static bool arm_print_operand_punct_valid_p (unsigned char code);
+ static const char *fp_const_from_val (REAL_VALUE_TYPE *);
+@@ -16089,7 +16089,7 @@ arm_print_condition (FILE *stream)
+    before output.
+    If CODE is 'B' then output a bitwise inverted value of X (a const int).
+    If X is a REG and CODE is `M', output a ldm/stm style multi-reg.  */
+-static void
++void
+ arm_print_operand (FILE *stream, rtx x, int code)
+ {
+   switch (code)
+diff --git a/gcc/config/arm/bpabi.h b/gcc/config/arm/bpabi.h
+index 7b5ee62..a703548 100644
+--- a/gcc/config/arm/bpabi.h
++++ b/gcc/config/arm/bpabi.h
+@@ -71,7 +71,7 @@
+ #define BPABI_LINK_SPEC \
+   "%{mbig-endian:-EB} %{mlittle-endian:-EL} "		\
+   "%{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic} "	\
+-  "-X" SUBTARGET_EXTRA_LINK_SPEC TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
++  SUBTARGET_EXTRA_LINK_SPEC TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
+ 
+ #undef  LINK_SPEC
+ #define LINK_SPEC BPABI_LINK_SPEC
+diff --git a/gcc/config/arm/elf.h b/gcc/config/arm/elf.h
+index 8840088..bccd25f 100644
+--- a/gcc/config/arm/elf.h
++++ b/gcc/config/arm/elf.h
+@@ -105,7 +105,7 @@
+    (TARGET_32BIT || (TARGET_THUMB && (optimize_size || flag_pic)))
+ 
+ #ifndef LINK_SPEC
+-#define LINK_SPEC "%{mbig-endian:-EB} %{mlittle-endian:-EL} -X"
++#define LINK_SPEC "%{mbig-endian:-EB} %{mlittle-endian:-EL}"
+ #endif
+   
+ /* Run-time Target Specification.  */
+diff --git a/gcc/config/arm/sol2.h b/gcc/config/arm/sol2.h
+new file mode 100644
+index 0000000..6cbe72d
+--- /dev/null
++++ b/gcc/config/arm/sol2.h
+@@ -0,0 +1,72 @@
++#include <stdio.h>
++
++extern void arm_print_operand (FILE *, rtx, int);
++
++#define TARGET_SUN_TLS 1
++
++#define ASM_OUTPUT_CALL(FILE, FN)				\
++  do {								\
++    fprintf (FILE, "\tbl\t");					\
++    arm_print_operand (FILE, XEXP (DECL_RTL (FN), 0), 0);	\
++    fprintf (FILE, "\n");					\
++  } while (0)
++
++/*
++ * XXXARM: We're re-defining this to the default ARM-y value, because sol2.h
++ * makes it Sun as-y, which of course we'll never have.
++ */
++#undef ASM_SPEC
++#define ASM_SPEC "\
++%{mbig-endian:-EB} \
++%{mlittle-endian:-EL} \
++%{mcpu=*:-mcpu=%*} \
++%{march=*:-march=%*} \
++%{mapcs-*:-mapcs-%*} \
++%(subtarget_asm_float_spec) \
++%{mthumb-interwork:-mthumb-interwork} \
++%{msoft-float:-mfloat-abi=soft} %{mhard-float:-mfloat-abi=hard} \
++%{mfloat-abi=*} %{mfpu=*} \
++%(subtarget_extra_asm_spec)"
++
++/*
++ * XXXARM: Probably a huge mistake
++ *
++ * Otherwise, with this enabled, we end up needing symbols that don't
++ * exist while building libgcc2.
++ */
++#undef ENABLE_EXECUTE_STACK
++
++/* This is how to declare the size of a function.  For Solaris, we output
++   any .init or .fini entries here.  */
++#undef ASM_DECLARE_FUNCTION_SIZE
++#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)		\
++  do								\
++    {								\
++      ARM_OUTPUT_FN_UNWIND (FILE, FALSE);			\
++      if (!flag_inhibit_size_directive)				\
++	ASM_OUTPUT_MEASURED_SIZE (FILE, FNAME);			\
++      solaris_output_init_fini (FILE, DECL);			\
++    }								\
++  while (0)
++
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()		\
++  do 						\
++    {						\
++      TARGET_BPABI_CPP_BUILTINS();		\
++      SOL_TARGET_OS_CPP_BUILTINS();		\
++    }						\
++  while (false)
++
++
++#undef	TARGET_DEFAULT_FLOAT_ABI
++#define	TARGET_DEFAULT_FLOAT_ABI	ARM_FLOAT_ABI_HARD
++
++#undef	ARM_DEFAULT_ABI
++#define	ARM_DEFAULT_ABI	ARM_ABI_AAPCS_LINUX
++
++#undef	SUBTARGET_ARCH_DEFAULT
++#define	SUBTARGET_ARCH_DEFAULT
++
++/* XXXARM: Something we can do to disable interwork? */
++/* XXXARM: Something we can do to default arm11/armv6? */
+diff --git a/gcc/config/arm/t-sol2 b/gcc/config/arm/t-sol2
+new file mode 100644
+index 0000000..708c636
+--- /dev/null
++++ b/gcc/config/arm/t-sol2
+@@ -0,0 +1,5 @@
++UNWIND_H = $(srcdir)/config/arm/unwind-arm.h
++LIB2ADDEH = $(srcdir)/config/arm/unwind-arm.c \
++  $(srcdir)/config/arm/libunwind.S \
++  $(srcdir)/config/arm/pr-support.c $(srcdir)/unwind-c.c
++LIB2ADDEHDEP = $(UNWIND_H) $(srcdir)/config/$(LIB1ASMSRC)
+diff --git a/gcc/config/sol2.h b/gcc/config/sol2.h
+index e37124f..737cf5b 100644
+--- a/gcc/config/sol2.h
++++ b/gcc/config/sol2.h
+@@ -86,7 +86,7 @@ along with GCC; see the file COPYING3.  If not see
+ 
+ /* Names to predefine in the preprocessor for this target machine.  */
+ #define TARGET_SUB_OS_CPP_BUILTINS()
+-#define TARGET_OS_CPP_BUILTINS()			\
++#define SOL_TARGET_OS_CPP_BUILTINS()			\
+     do {						\
+ 	builtin_define_std ("unix");			\
+ 	builtin_define_std ("sun");			\
+@@ -108,6 +108,8 @@ along with GCC; see the file COPYING3.  If not see
+ 	TARGET_SUB_OS_CPP_BUILTINS();			\
+     } while (0)
+ 
++#define	TARGET_OS_CPP_BUILTINS()	SOL_TARGET_OS_CPP_BUILTINS()
++
+ /* The system headers under Solaris 2 are C++-aware since 2.0.  */
+ #define NO_IMPLICIT_EXTERN_C
+ 
+diff --git a/libcpp/configure b/libcpp/configure
+index 41677ce..adc730f 100755
+--- a/libcpp/configure
++++ b/libcpp/configure
+@@ -7091,6 +7091,7 @@ case $target in
+ 	alpha*-*-* | \
+ 	arm*-*-*eabi* | \
+ 	arm*-*-symbianelf* | \
++	arm*-*-solaris* | \
+ 	x86_64-*-* | \
+ 	ia64-*-* | \
+ 	hppa*64*-*-* | \
+diff --git a/libcpp/configure.ac b/libcpp/configure.ac
+index 1c67eaf..58ef2f5 100644
+--- a/libcpp/configure.ac
++++ b/libcpp/configure.ac
+@@ -141,6 +141,7 @@ case $target in
+ 	alpha*-*-* | \
+ 	arm*-*-*eabi* | \
+ 	arm*-*-symbianelf* | \
++	arm*-*-solaris* | \
+ 	x86_64-*-* | \
+ 	ia64-*-* | \
+ 	hppa*64*-*-* | \
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 25e949e..18c3c45 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -311,6 +311,11 @@ i[34567]86-*-nto-qnx*)
+ 	;;
+ i[34567]86-*-rtems*)
+ 	;;
++arm*-*-solaris2*)
++	# XXX: needs t-sol2 to work?
++	# XXX: We want to provied the same runtime objs as we do for i386, also?
++	# extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
++	;;
+ i[34567]86-*-solaris2*)
+ 	tmake_file="${tmake_file} i386/t-sol2"
+ 	case ${host} in

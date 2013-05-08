@@ -39,9 +39,9 @@ CLEANFILES +=	$(VER)-$(ARCH)-build
 GCC =	gcc
 GXX =	/bin/false
 
-arm_PATCHES += arm.patch
+arm_PATCHES += arm-solaris-4.6.3.diff
 arm_TARGET_OPTS = \
-	--target=arm-*-solaris2.11 \
+	--target=arm-pc-solaris2.11 \
 	--with-arch=armv6 \
 	--with-fpu=vfp \
 	--with-float=hard \
@@ -52,7 +52,9 @@ arm_TARGET_OPTS = \
 	--enable-languages="c" \
 	--disable-libssp \
 	--disable-libada \
-	--disable-libgomp
+	--disable-libgomp \
+	--enable-frame-pointer \
+	--enable-checking=yes
 
 i86pc_TARGET_OPTS= \
 	--enable-languages="c,c++" \
