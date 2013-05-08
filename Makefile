@@ -23,7 +23,7 @@
 
 BASE =		$(PWD)
 DESTDIR =	$(BASE)/proto-$(ARCH)
-PATH =		$(DESTDIR)/usr/bin:/opt/gcc/4.4.4/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
+BPATH =	$(DESTDIR)/usr/bin:/opt/gcc/4.4.4/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
 
 SUBDIRS = \
 	cpp
@@ -85,6 +85,7 @@ mpc: mpfr gmp
 
 $(DESTDIR)/usr/gnu/bin/gas: FRC
 	(cd binutils && \
+	    PATH=$(BPATH) \
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
@@ -92,6 +93,7 @@ $(DESTDIR)/usr/gnu/bin/gas: FRC
 
 $(DESTDIR)/usr/bin/gcc: $(DESTDIR)/usr/gnu/bin/gas $(GCC_SUBDIRS)
 	(cd gcc4 && \
+	    PATH=$(BPATH) \
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
@@ -107,12 +109,14 @@ $(DESTDIR)/usr/bin/gcc: $(DESTDIR)/usr/gnu/bin/gas $(GCC_SUBDIRS)
 #
 $(GCC_SUBDIRS): FRC
 	(cd $@ && \
+	    PATH=$(BPATH) \
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install && rm -f $(DESTDIR)/usr/lib/*.la)
 
 $(SUBDIRS): $(DESTDIR)/usr/bin/gcc
 	(cd $@ && \
+	    PATH=$(BPATH) \
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
