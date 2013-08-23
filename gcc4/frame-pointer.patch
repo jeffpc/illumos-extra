@@ -1,0 +1,48 @@
+From 78eed2ed49e951803de787edc41d5ede627ad7a0 Mon Sep 17 00:00:00 2001
+From: Robert Mustacchi <rm@joyent.com>
+Date: Tue, 20 Aug 2013 00:40:30 -0700
+Subject: [PATCH] always have a frame pointer
+
+---
+ gcc/config/arm/arm.h  |    4 ++++
+ gcc/config/arm/sol2.h |   11 +++++++++++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
+
+diff --git a/gcc/config/arm/arm.h b/gcc/config/arm/arm.h
+index 151d314..7695eeb 100644
+--- a/gcc/config/arm/arm.h
++++ b/gcc/config/arm/arm.h
+@@ -876,7 +876,11 @@ extern int arm_structure_size_boundary;
+    backtrace structures on the stack (if required to do so via a command line
+    option) using r11.  This is the only 'user visible' use of r11 as a frame
+    pointer.  */
++#ifdef	SUBTARGET_ARM_FRAME_POINTER_REGNUM
++#define	ARM_HARD_FRAME_POINTER_REGNUM	SUBTARGET_ARM_FRAME_POINTER_REGNUM
++#else
+ #define ARM_HARD_FRAME_POINTER_REGNUM	11
++#endif  /* SUBTARGET_ARM_FRAME_POINTER_REGNUM */
+ #define THUMB_HARD_FRAME_POINTER_REGNUM	 7
+ 
+ #define HARD_FRAME_POINTER_REGNUM		\
+diff --git a/gcc/config/arm/sol2.h b/gcc/config/arm/sol2.h
+index 6cbe72d..09da04c 100644
+--- a/gcc/config/arm/sol2.h
++++ b/gcc/config/arm/sol2.h
+@@ -70,3 +70,14 @@ extern void arm_print_operand (FILE *, rtx, int);
+ 
+ /* XXXARM: Something we can do to disable interwork? */
+ /* XXXARM: Something we can do to default arm11/armv6? */
++
++/*
++ * XXXARM: Unlike the cool kids we actually kind of care about the frame
++ * pointer. So let's get that going here. We're going to try and use r7 like the
++ * Apple iOS ABI and hence are a bit hacky about how we do that.
++ */
++#undef	SUBTARGET_FRAME_POINTER_REQUIRED
++#define	SUBTARGET_FRAME_POINTER_REQUIRED	1
++
++#undef	SUBTARGET_ARM_FRAME_POINTER_REGNUM
++#define	SUBTARGET_ARM_FRAME_POINTER_REGNUM	9
+-- 
+1.7.3.2
+

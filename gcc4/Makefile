@@ -39,7 +39,9 @@ CLEANFILES +=	$(VER)-$(ARCH)-build
 GCC =	gcc
 GXX =	/bin/false
 
-arm_PATCHES += arm-solaris-4.6.3.diff
+arm_PATCHES += \
+	arm-solaris-4.6.3.diff \
+	frame-pointer.patch
 arm_TARGET_OPTS = \
 	--target=arm-pc-solaris2.11 \
 	--with-arch=armv6 \
