@@ -128,7 +128,7 @@ install_strap: $(STRAP_SUBDIRS) gcc4 binutils $(GCC_SUBDIRS)
 clean: 
 	-for dir in $(SUBDIRS) gcc4 binutils $(GCC_SUBDIRS); \
 	    do (cd $$dir; $(MAKE) DESTDIR=$(DESTDIR) clean); done
-	-rm -rf proto
+	-rm -rf proto proto-$(ARCH)
 
 manifest:
 	cp manifest $(DESTDIR)/$(DESTNAME)
