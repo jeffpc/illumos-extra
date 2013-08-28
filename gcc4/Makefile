@@ -47,7 +47,7 @@ arm_TARGET_OPTS = \
 	--with-arch=armv6 \
 	--with-fpu=vfp \
 	--with-float=hard \
-	--with-abi=aapcs \
+	--with-abi=aapcs-linux \
 	--with-mode=arm \
 	--with-newlib \
 	--disable-multilib \
