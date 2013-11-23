@@ -51,7 +51,7 @@ srp_ld32=$2
 [[ -d $srp_root ]] || fatal "not a directory"
 
 for f in $(find $srp_root -type f -exec file '{}' \; | grep ELF |
-    grep -v ARM | awk 'BEGIN{ FS=":" } { print $1 }'); do
+    grep -v ARM | grep -v relocatable | awk 'BEGIN{ FS=":" } { print $1 }'); do
 	fix_file $f
 done
 
