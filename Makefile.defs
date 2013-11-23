@@ -29,7 +29,7 @@ VER.64 =	$(VER)-$(ARCH)-64$(STRAP)
 PATH =		$(DESTDIR)/usr/bin:/opt/gcc/4.4.4/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
 
 MAKE =		gmake
-PARALLEL =	-j128
+PARALLEL =	-j18
 MAKE_VERBOSE =	V=1
 GCC =		$(DESTDIR)/usr/bin/gcc
 GXX =		$(DESTDIR)/usr/bin/g++
@@ -48,6 +48,16 @@ BUILD32 =	yes
 BUILD64 =
 
 CPPFLAGS =	$(SYSINCDIRS:%=-isystem $(DESTDIR)/%)
+
+#
+# These are all definitions that relate to Sun Make. There are basically two
+# different sets that we care about. The first is the boostrap make. This is
+# used to build the strap make. Once we have the strap make, it is used for all
+# other makes. Beacuse MAKE is used extensively to mean GNU make in these
+# makefiles, we instead use SUN_MAKE and SUM_MAKE_STRAP.
+#
+SUN_MAKE_STRAP=/opt/local/bin/dmake
+SUN_MAKE=$(DESTDIR)/../proto.strap/usr/bin/dmake
 
 #
 # Because of bugs in ntp, we need to be able to refer to the target specific

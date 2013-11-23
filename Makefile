@@ -23,7 +23,24 @@
 
 BASE =		$(PWD)
 DESTDIR =	$(BASE)/proto-$(ARCH)
+NATIVE_DESTDIR = $(BASE)/proto-native
 BPATH =	$(DESTDIR)/usr/bin:/opt/gcc/4.4.4/bin:/usr/bin:/usr/sbin:/sbin:/opt/local/bin
+
+#
+# These are the minimum set of dependencies you need to build for the
+# host such that it can build everything when it you're targetting a
+# different architecture. When you're building on yourself then these
+# will be ignored.
+#
+HOST_SUBDIRS = \
+	cpp-nat \
+	libz-nat \
+	make-nat
+
+HOST_GCC_SUBDIRS = \
+	gmp-nat \
+	mpfr-nat \
+	mpc-nat	
 
 SUBDIRS = \
 	cpp
@@ -62,14 +79,24 @@ ifneq ($(STRAP),strap)
 $(error only building the strap is supported currently)
 endif
 
+ifeq ($(NATIVE_ARCH),)
+  NATIVE_ARCH = $(shell uname -i)
+endif
+
+ifneq ($(NATIVE_ARCH),$(ARCH))
+  NATIVE_SUBDIRS =  $(HOST_SUBDIRS)
+  NATIVE_GCC_SUBDIRS = $(HOST_GCC_SUBDIRS)
+else
+  NATIVE_SUBDIRS =
+  NATIVE_GCC_SUBDIRS =
+endif
+
 GITDESCRIBE = \
 	g$(shell git describe --all --long | $(AWK) -F'-g' '{print $$NF}')
 
 TARBALL =	$(NAME)-$(BRANCH)-$(TIMESTAMP)-$(GITDESCRIBE).tgz
 
-all: $(SUBDIRS)
-
-strap: $(STRAP_SUBDIRS)
+strap: $(STRAP_SUBDIRS)  $(NATIVE_SUBDIRS)
 
 mpfr: gmp 
 mpc: mpfr gmp
@@ -97,6 +124,8 @@ $(DESTDIR)/usr/bin/gcc: $(DESTDIR)/usr/gnu/bin/gas $(GCC_SUBDIRS)
 	    PKG_CONFIG_LIBDIR="" \
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
+	# XXX I'm really sorry
+	./tools/setrpath $(DESTDIR) $(DESTDIR)/usr/lib:/opt/local/lib:/usr/lib:/lib
 
 #
 # XXX
@@ -121,9 +150,50 @@ $(SUBDIRS): $(DESTDIR)/usr/bin/gcc
 	    STRAP=$(STRAP) \
 	    $(MAKE) DESTDIR=$(DESTDIR) install)
 
+#
+# Native dependencies from here on out.
+# XXX We shouldn't just duplicate all the gcc subdirs stuff... but I'm
+# not sure what else to do.
+#
+
+$(NATIVE_DESTDIR)/usr/gnu/bin/gas: FRC
+	(cd binutils && \
+	    PATH=$(BPATH) \
+	    PKG_CONFIG_LIBDIR="" \
+	    STRAP=$(STRAP) \
+	    ARCH=$(NATIVE_ARCH) \
+	    $(MAKE) DESTDIR=$(NATIVE_DESTDIR) install)
+
+
+$(NATIVE_DESTDIR)/usr/bin/gcc: $(NATIVE_DESTDIR)/usr/gnu/bin/gas $(NATIVE_GCC_SUBDIRS)
+	(cd gcc4 && \
+	    PATH=$(BPATH) \
+	    PKG_CONFIG_LIBDIR="" \
+	    STRAP=$(STRAP) \
+	    ARCH=$(NATIVE_ARCH) \
+	    $(MAKE) DESTDIR=$(NATIVE_DESTDIR) install)
+	# XXX I'm really sorry
+	./tools/setrpath $(NATIVE_DESTDIR) $(NATIVE_DESTDIR)/usr/lib:/opt/local/lib:/usr/lib:/lib
+
+$(NATIVE_GCC_SUBDIRS): FRC
+	(cd $$(basename $@ -nat) && \
+	    PATH=$(BPATH) \
+	    PKG_CONFIG_LIBDIR="" \
+	    STRAP=$(STRAP) \
+	    ARCH=$(NATIVE_ARCH) \
+	    $(MAKE) DESTDIR=$(NATIVE_DESTDIR) install && rm -f $(NATIVE_DESTDIR)/usr/lib/*.la)
+
+$(NATIVE_SUBDIRS): $(NATIVE_DESTDIR)/usr/bin/gcc
+	(cd $$(basename $@ -nat) && \
+	    PATH=$(BPATH) \
+	    PKG_CONFIG_LIBDIR="" \
+	    STRAP=$(STRAP) \
+	    ARCH=$(NATIVE_ARCH) \
+	    $(MAKE) DESTDIR=$(NATIVE_DESTDIR) install)
+
 install: $(SUBDIRS) gcc4 binutils
 
-install_strap: $(STRAP_SUBDIRS) gcc4 binutils $(GCC_SUBDIRS)
+install_strap: $(STRAP_SUBDIRS) gcc4 binutils $(GCC_SUBDIRS) $(NATIVE_SUBDIRS)
 
 clean: 
 	-for dir in $(SUBDIRS) gcc4 binutils $(GCC_SUBDIRS); \
