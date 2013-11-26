@@ -35,7 +35,9 @@ arm_AUTOCONF_OPTS += \
 	--target=arm-*-solaris2.11 \
 	--enable-ld=no
 
-arm_PATCHES +=	arm.patch
+arm_PATCHES += \
+	arm.patch \
+	vfp.diff
 
 i86pc_AUTOCONF_OPTS = \
 	--target=i386-pc-solaris2.11

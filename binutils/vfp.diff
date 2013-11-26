@@ -1,0 +1,107 @@
+commit 7465e07a575987962b4f1ade6656d5dfbe8fa78e
+Author: Nick Clifton <nickc@redhat.com>
+Date:   Tue Mar 20 11:55:07 2012 +0000
+
+    	* config/tc-arm.c (do_vmrs): Accept priviledged mode VFP system
+    	registers.
+    	(do_vmsr): Likewise.
+    	(arm_opcode_insns): Do not default to using the FPSCR register in
+    	the VMRS and VMSR registers.
+    
+    	* gas/arm/vfp1xD.s: Add tests of the VMSR ad VMRS instructions in
+    	priviledged modes.
+    	* gas/arm/vfp1xD.d: Update expected output.
+
+diff --git a/gas/config/tc-arm.c b/gas/config/tc-arm.c
+index 8b0f6da..9222aff 100644
+--- a/gas/config/tc-arm.c
++++ b/gas/config/tc-arm.c
+@@ -8102,8 +8102,18 @@ do_vmrs (void)
+       return;
+     }
+ 
+-  if (inst.operands[1].reg != 1)
+-    first_error (_("operand 1 must be FPSCR"));
++  switch (inst.operands[1].reg)
++    {
++    case 0: /* FPSID */
++    case 1: /* FPSCR */
++    case 6: /* MVFR1 */
++    case 7: /* MVFR0 */
++    case 8: /* FPEXC */
++      inst.instruction |= (inst.operands[1].reg << 16);
++      break;
++    default:
++      first_error (_("operand 1 must be a VFP extension System Register"));
++    }
+ 
+   inst.instruction |= (Rt << 12);
+ }
+@@ -8121,8 +8131,16 @@ do_vmsr (void)
+       return;
+     }
+ 
+-  if (inst.operands[0].reg != 1)
+-    first_error (_("operand 0 must be FPSCR"));
++  switch (inst.operands[0].reg)
++    {
++    case 0: /* FPSID  */
++    case 1: /* FPSCR  */
++    case 8: /* FPEXC */
++      inst.instruction |= (inst.operands[0].reg << 16);
++      break;
++    default:
++      first_error (_("operand 0 must be FPSID or FPSCR pr FPEXC"));
++    }
+ 
+   inst.instruction |= (Rt << 12);
+ }
+@@ -18147,8 +18165,8 @@ static const struct asm_opcode insns[] =
+  cCE("fmrs",	e100a10, 2, (RR, RVS),	      vfp_reg_from_sp),
+  cCE("fmsr",	e000a10, 2, (RVS, RR),	      vfp_sp_from_reg),
+  cCE("fmstat",	ef1fa10, 0, (),		      noargs),
+- cCE("vmrs",	ef10a10, 2, (APSR_RR, RVC),   vmrs),
+- cCE("vmsr",	ee10a10, 2, (RVC, RR),        vmsr),
++ cCE("vmrs",	ef00a10, 2, (APSR_RR, RVC),   vmrs),
++ cCE("vmsr",	ee00a10, 2, (RVC, RR),        vmsr),
+  cCE("fsitos",	eb80ac0, 2, (RVS, RVS),	      vfp_sp_monadic),
+  cCE("fuitos",	eb80a40, 2, (RVS, RVS),	      vfp_sp_monadic),
+  cCE("ftosis",	ebd0a40, 2, (RVS, RVS),	      vfp_sp_monadic),
+diff --git a/gas/testsuite/gas/arm/vfp1xD.d b/gas/testsuite/gas/arm/vfp1xD.d
+index eebc72b..62b1957 100644
+--- a/gas/testsuite/gas/arm/vfp1xD.d
++++ b/gas/testsuite/gas/arm/vfp1xD.d
+@@ -278,5 +278,12 @@ Disassembly of section .text:
+ 0+430 <[^>]*> eee1ba10 	vmsr	fpscr, fp
+ 0+434 <[^>]*> eee1ca10 	vmsr	fpscr, ip
+ 0+438 <[^>]*> eee1ea10 	vmsr	fpscr, lr
+-0+43c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+-
++0+43c <[^>]*> eee01a10 	vmsr	fpsid, r1
++0+440 <[^>]*> eee82a10 	vmsr	fpexc, r2
++0+444 <[^>]*> eef03a10 	vmrs	r3, fpsid
++0+448 <[^>]*> eef64a10 	vmrs	r4, mvfr1
++0+44c <[^>]*> eef75a10 	vmrs	r5, mvfr0
++0+450 <[^>]*> eef86a10 	vmrs	r6, fpexc
++0+454 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
++0+458 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
++0+45c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+diff --git a/gas/testsuite/gas/arm/vfp1xD.s b/gas/testsuite/gas/arm/vfp1xD.s
+index 274a0b1..0bf58b2 100644
+--- a/gas/testsuite/gas/arm/vfp1xD.s
++++ b/gas/testsuite/gas/arm/vfp1xD.s
+@@ -381,4 +381,14 @@ F:
+ 	vmsr	FPSCR, r12
+ 	vmsr	FPSCR, r14
+ 
++	@ Priviledged externsions to VMSR/VMRS instructions
++	vmsr	FPSID, r1
++	vmsr	FPEXC, r2
++	vmrs	r3, FPSID
++	vmrs	r4, MVFR1
++	vmrs	r5, MVFR0
++	vmrs	r6, FPEXC
++	
++	nop
++	nop
+ 	nop
