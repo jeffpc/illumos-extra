@@ -66,12 +66,18 @@ endif
 # Ensure ARCH is set from the outside
 #
 ifeq ($(ARCH),)
-$(error ARCH is not defined. ARCH should be one of i86pc or arm)
+$(error ARCH is not defined. ARCH should be one of i86pc or arm or aarch64)
 endif
 
 ifeq ($(ARCH),arm)
 ifeq ($(LD_ALTEXEC),)
 $(error LD_ALTEXEC should point to an arm ld)
+endif
+endif
+
+ifeq ($(ARCH),aarch64)
+ifeq ($(LD_ALTEXEC),)
+$(error LD_ALTEXEC should point to an aarch64 ld)
 endif
 endif
 
