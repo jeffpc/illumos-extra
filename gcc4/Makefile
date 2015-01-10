@@ -62,9 +62,18 @@ arm_TARGET_OPTS = \
 	--enable-frame-pointer \
 	--enable-checking=yes
 
-aarch64_PATCHES +=
+aarch64_PATCHES += \
+	aarch64.patch
 aarch64_TARGET_OPTS = \
-	--target=aarch64-illumos
+	--target=aarch64-illumos \
+	--with-newlib \
+	--disable-multilib \
+	--enable-languages="c" \
+	--disable-libssp \
+	--disable-libada \
+	--disable-libgomp \
+	--enable-frame-pointer \
+	--enable-checking=yes
 
 s390x_TRAGET_OPTS= \
 	--target=s390x-ibm-linux \
