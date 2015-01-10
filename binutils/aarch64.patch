@@ -1,0 +1,64 @@
+diff -Nur binutils-2.25.orig/bfd/config.bfd binutils-2.25/bfd/config.bfd
+--- binutils-2.25.orig/bfd/config.bfd	2014-10-14 03:32:02.000000000 -0400
++++ binutils-2.25/bfd/config.bfd	2015-01-10 15:17:28.565264161 -0500
+@@ -167,12 +167,12 @@
+ 
+ # START OF targmatch.h
+ #ifdef BFD64
+-  aarch64-*-elf)
++  aarch64-*-elf | aarch64-*-illumos*)
+     targ_defvec=aarch64_elf64_le_vec
+     targ_selvecs="aarch64_elf64_be_vec aarch64_elf32_le_vec aarch64_elf32_be_vec arm_elf32_le_vec arm_elf32_be_vec"
+     want64=true
+     ;;
+-  aarch64_be-*-elf)
++  aarch64_be-*-elf | aarch64_be-*-illumos*)
+     targ_defvec=aarch64_elf64_be_vec
+     targ_selvecs="aarch64_elf64_le_vec aarch64_elf32_le_vec aarch64_elf32_be_vec arm_elf32_be_vec arm_elf32_le_vec"
+     want64=true
+diff -Nur binutils-2.25.orig/config.sub binutils-2.25/config.sub
+--- binutils-2.25.orig/config.sub	2014-10-14 03:32:02.000000000 -0400
++++ binutils-2.25/config.sub	2015-01-10 16:17:13.541982368 -0500
+@@ -118,7 +118,7 @@
+   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+   knetbsd*-gnu* | netbsd*-gnu* | \
+-  kopensolaris*-gnu* | \
++  kopensolaris*-gnu* | illumos* | \
+   storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
+@@ -129,7 +129,7 @@
+     ;;
+   *)
+     basic_machine=`echo $1 | sed 's/-[^-]*$//'`
+-    if [ $basic_machine != $1 ]
++    if [ $basic_machine != $1 ] ;
+     then os=`echo $1 | sed 's/.*-/-/'`
+     else os=; fi
+     ;;
+@@ -1362,7 +1362,7 @@
+ 	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
+ 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+-	      | -sym* | -kopensolaris* | -plan9* \
++	      | -sym* | -kopensolaris* | -illumos* | -plan9* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+ 	      | -aos* | -aros* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+diff -Nur binutils-2.25.orig/gas/config/te-illumos.h binutils-2.25/gas/config/te-illumos.h
+--- binutils-2.25.orig/gas/config/te-illumos.h	1969-12-31 19:00:00.000000000 -0500
++++ binutils-2.25/gas/config/te-illumos.h	2015-01-10 15:25:29.146125835 -0500
+@@ -0,0 +1 @@
++#include "te-solaris.h"
+diff -Nur binutils-2.25.orig/gas/configure.tgt binutils-2.25/gas/configure.tgt
+--- binutils-2.25.orig/gas/configure.tgt	2014-10-14 03:32:03.000000000 -0400
++++ binutils-2.25/gas/configure.tgt	2015-01-10 15:25:36.498113673 -0500
+@@ -119,6 +119,7 @@
+ # Note: This table is alpha-sorted, please try to keep it that way.
+ case ${generic_target} in
+   aarch64*-*-elf)			fmt=elf;;
++  aarch64*-*-illumos*)			fmt=elf em=illumos ;;
+   aarch64*-*-linux*)			fmt=elf em=linux ;;
+ 
+   alpha-*-*vms*)			fmt=evax ;;

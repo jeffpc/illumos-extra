@@ -21,7 +21,12 @@
 # Copyright (c) 2012, Joyent, Inc.  All rights reserved.
 #
 
+ifeq ($(ARCH),aarch64)
+VER =	binutils-2.25
+else
 VER =	binutils-2.22
+endif
+
 include ../Makefile.defs
 
 TARBALL =		$(VER).tar.bz2
@@ -38,6 +43,16 @@ arm_AUTOCONF_OPTS += \
 arm_PATCHES += \
 	arm.patch \
 	vfp.diff
+
+aarch64_AUTOCONF_OPTS += \
+	--target=aarch64-illumos \
+	--enable-ld=no
+
+aarch64_PATCHES += \
+	aarch64.patch
+
+s390x_AUTOCONF_OPTS = \
+	--target=s390x-linux
 
 i86pc_AUTOCONF_OPTS = \
 	--target=i386-pc-solaris2.11
