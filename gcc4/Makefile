@@ -29,7 +29,11 @@
 # be accommodated without excessive effort but is a highly unusual pattern.
 #
 
+ifeq ($(ARCH),aarch64)
+VER =	gcc-4.9.2
+else
 VER =	gcc-4.6.3
+endif
 NEWLIB = newlib-2.0.0
 
 include ../Makefile.defs
@@ -49,6 +53,21 @@ arm_TARGET_OPTS = \
 	--with-float=hard \
 	--with-abi=aapcs-linux \
 	--with-mode=arm \
+	--with-newlib \
+	--disable-multilib \
+	--enable-languages="c" \
+	--disable-libssp \
+	--disable-libada \
+	--disable-libgomp \
+	--enable-frame-pointer \
+	--enable-checking=yes
+
+aarch64_PATCHES +=
+aarch64_TARGET_OPTS = \
+	--target=aarch64-illumos
+
+s390x_TRAGET_OPTS= \
+	--target=s390x-ibm-linux \
 	--with-newlib \
 	--disable-multilib \
 	--enable-languages="c" \
