@@ -6,8 +6,11 @@
 /gcc4/gcc-4.9.2-aarch64-32strap/
 /gcc4/gcc-4.9.2-aarch64-build/
 /gmp/gmp-5.1.0-arm-32strap/
+/gmp/gmp-5.1.0-aarch64-32strap/
 /mpc/mpc-1.0.1-arm-32strap/
+/mpc/mpc-1.0.1-aarch64-32strap/
 /mpfr/mpfr-3.1.1-arm-32strap/
+/mpfr/mpfr-3.1.1-aarch64-32strap/
 cpp/cpp.ostrap
 cpp/cppstrap
 cpp/y.tab.c
