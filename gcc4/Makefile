@@ -38,6 +38,9 @@ NEWLIB = newlib-2.0.0
 
 include ../Makefile.defs
 
+TARBALL =		$(VER).tar.bz2
+TARBALL_COMPRESS =	-j
+
 CLEANFILES +=	$(VER)-$(ARCH)-build
 
 GCC =	gcc
